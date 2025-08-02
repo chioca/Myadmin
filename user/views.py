@@ -1,14 +1,33 @@
+import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 from bpmappers.djangomodel import ModelMapper
 from user.models import SysUser
 from rest_framework_jwt.settings import api_settings
+from user.decorators import standard_api_response
 # Create your views here.
 
 class SysUserMapper(ModelMapper):
     class Meta:
         model = SysUser
+
+
+class LoginView(View):
+    @standard_api_response
+    def post(self,request):
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        print(username)
+        print(password)
+        user = SysUser.objects.get(username=username, password=password)
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+        return {'token':token}
+
 class TestView(View):
     def get(self, request):
         token = request.META.get('HTTP_AUTHORIZATION')
