@@ -3,9 +3,10 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 from bpmappers.djangomodel import ModelMapper
-from user.models import SysUser
+from user.models import SysUser, SysUserSerializer
 from rest_framework_jwt.settings import api_settings
 from user.decorators import standard_api_response
+
 # Create your views here.
 
 class SysUserMapper(ModelMapper):
@@ -26,7 +27,7 @@ class LoginView(View):
         jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
         payload = jwt_payload_handler(user)
         token = jwt_encode_handler(payload)
-        return {'token':token}
+        return {'token':token,'user':SysUserSerializer(user).data}
 
 class TestView(View):
     def get(self, request):
