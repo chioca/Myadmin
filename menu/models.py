@@ -15,7 +15,7 @@ class SysMenu(models.Model):
     order_num = models.IntegerField(null=True, verbose_name="显示顺序")
     path = models.CharField(max_length=200, null=True, verbose_name="路由地址")
     component = models.CharField(max_length=255, null=True, verbose_name="组件路径")
-    menu_type = models.CharField(max_length=1, null=True, verbose_name="菜单类型（M目录 C菜单 F按钮）")
+    menu_type = models.CharField(max_length=1, null=True, verbose_name="菜单类型(M目录 C菜单 F按钮)")
     perms = models.CharField(max_length=100, null=True, verbose_name="权限标识")
     create_time = models.DateField(null=True, verbose_name="创建时间", )
     update_time = models.DateField(null=True, verbose_name="更新时间")

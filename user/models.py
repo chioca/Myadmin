@@ -1,5 +1,6 @@
 from django.db import models
 from rest_framework import serializers
+from bpmappers.djangomodel import ModelMapper
 # Create your models here.
 class SysUser(models.Model):
     id = models.AutoField(primary_key=True)
@@ -21,3 +22,7 @@ class SysUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = SysUser
         fields = '__all__'
+        
+class SysUserMapper(ModelMapper):
+    class Meta:
+        model = SysUser

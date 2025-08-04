@@ -11,8 +11,8 @@ def standard_api_response(view_func):
             response = view_func(request, *args, **kwargs)
             
             # 如果视图已经返回 JsonResponse，直接透传
-            # if isinstance(response, JsonResponse):
-            #     return response
+            if isinstance(response, JsonResponse):
+                return response
                 
             # 统一成功响应格式
             return JsonResponse({

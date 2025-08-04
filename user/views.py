@@ -1,33 +1,70 @@
 import json
 from django.http import JsonResponse
-from django.shortcuts import render
 from django.views import View
-from bpmappers.djangomodel import ModelMapper
-from user.models import SysUser, SysUserSerializer
+from user.models import SysUser, SysUserSerializer, SysUserMapper
 from rest_framework_jwt.settings import api_settings
 from user.decorators import standard_api_response
-
+from menu.models import SysMenu, SysMenuSerializer
+from role.models import SysRole
 # Create your views here.
 
-class SysUserMapper(ModelMapper):
-    class Meta:
-        model = SysUser
+
 
 
 class LoginView(View):
+    def buildTreeMenu(self, sysMenuList:SysMenu):
+        resultMenuList: list[SysMenu] = list()
+        for menu in sysMenuList:
+            for e in sysMenuList:
+                if e.parent_id == menu.id:
+                    if not hasattr(menu, "children"):
+                        menu.children = list()
+                    menu.children.append(e)
+            if menu.parent_id == 0:
+                resultMenuList.append(menu)
+        return resultMenuList
+        
     @standard_api_response
-    def post(self,request):
+    def post(self, request):
         data = json.loads(request.body)
         username = data.get('username')
         password = data.get('password')
-        print(username)
-        print(password)
-        user = SysUser.objects.get(username=username, password=password)
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
-        return {'token':token,'user':SysUserSerializer(user).data}
+        try:
+            user = SysUser.objects.get(username=username, password=password)
+            
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
+
+            role_ids = SysRole.objects.filter(
+                sysuserrole__user_id=user.id
+            ).values_list('id', flat=True)  
+            
+
+            menus = SysMenu.objects.filter(
+                sysrolemenu__role_id__in=role_ids
+            ).distinct()  
+            
+            print(f"Raw menus: {menus}")  
+
+            sorted_menus = sorted(menus, key=lambda x: x.id) 
+            menu_tree = self.buildTreeMenu(sorted_menus)  
+            
+            print(f"Menu tree: {menu_tree}")  
+
+            serialized_menus = [
+                SysMenuSerializer(menu).data for menu in menu_tree
+            ]
+            
+            return {
+                'token': token,
+                'user': SysUserSerializer(user).data,
+                'menuList': serialized_menus
+            }
+
+        except Exception as e:
+            raise Exception(str(e))  # 异常由装饰器统一处理
 
 class TestView(View):
     def get(self, request):
