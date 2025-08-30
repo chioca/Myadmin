@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
-from user.views import LoginView, CaptchaView, SaveView
+from user.views import LoginView, CaptchaView, SaveView, EditPasswordView
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('login',LoginView.as_view(),name='Login'),
     path('captcha',CaptchaView.as_view(),name='Captcha'),
     path('save', SaveView.as_view(), name='save'),
+    path('updateUserPwd', EditPasswordView.as_view(), name='updateUserPwd'),
 ]

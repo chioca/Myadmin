@@ -83,6 +83,24 @@ class SaveView(View):
             obj_sysuser.update_time = datetime.now().date()
             obj_sysuser.save()
         return JsonResponse({'code':200, 'message':'Success'})
+    
+class EditPasswordView(View):
+    
+    @standard_api_response
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        id = data['id']
+        oldPwd = data['oldPassword']
+        newPwd = data['newPassword']
+        obj_user = SysUser.objects.get(id=id)
+        if obj_user.password == oldPwd:
+            obj_user.password = newPwd
+            obj_user.update_time = newPwd
+            obj_user.save()
+            return JsonResponse({'code':200})
+        else :
+            return JsonResponse({'code':500, 'message':'原密码错误'})
+
 # class TestView(View):
 #     def get(self, request):
 #         token = request.META.get('HTTP_AUTHORIZATION')
