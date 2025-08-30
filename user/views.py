@@ -7,6 +7,7 @@ import uuid
 from django.http import JsonResponse
 from django.views import View
 from django.core.cache import cache
+from Myadmin import settings
 from user.models import SysUser, SysUserSerializer, SysUserMapper
 from rest_framework_jwt.settings import api_settings
 from user.decorators import standard_api_response
@@ -101,6 +102,38 @@ class EditPasswordView(View):
         else :
             return JsonResponse({'code':500, 'message':'原密码错误'})
 
+class EditImageView(View):
+    
+    @standard_api_response
+    def post(self, request):
+        file = request.FILES.get('avatar')
+        if file:
+            file_name = file.name
+            suffixName = file_name[file_name.rfind("."):] #获取文件拓展名
+            new_file_name = datetime.now().strftime('%Y%m%d%H%M%S') + suffixName
+            file_path = str(settings.MEDIA_ROOT) +  "\\userAvatar\\" + new_file_name
+            try:
+                with open(file_path, "wb") as f:
+                    for chunk in file.chunks():
+                        f.write(chunk)
+                return {'file_name':new_file_name}
+            except Exception as e:
+                raise Exception(str(e))
+            
+class AvatarView(View):
+    
+    @standard_api_response
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        id = data['id']
+        avatar = data['avatar']
+        try:
+            obj_user = SysUser.objects.get(id=id)
+            obj_user.avatar = avatar
+            obj_user.save()
+            return {'new_avatar': avatar}
+        except Exception as e:
+            raise Exception(str(e))
 # class TestView(View):
 #     def get(self, request):
 #         token = request.META.get('HTTP_AUTHORIZATION')
