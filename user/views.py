@@ -7,6 +7,7 @@ import uuid
 from django.http import JsonResponse
 from django.views import View
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from Myadmin import settings
 from user.models import SysUser, SysUserSerializer, SysUserMapper
 from rest_framework_jwt.settings import api_settings
@@ -132,6 +133,22 @@ class AvatarView(View):
             obj_user.avatar = avatar
             obj_user.save()
             return {'new_avatar': avatar}
+        except Exception as e:
+            raise Exception(str(e))
+        
+class SearchView(View):
+    
+    @standard_api_response
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        try:
+            pageNum = data['pageNume']
+            pageSize = data['pageSize']
+            userListPage = Paginator(SysUser.objects.all(), pageSize).page(pageNum)
+            obj_users = userListPage.object_list.values()
+            users = list(obj_users)
+            total = SysUser.objects.count()
+            return {"userList": users, "total":total}
         except Exception as e:
             raise Exception(str(e))
 # class TestView(View):
