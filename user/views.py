@@ -53,12 +53,10 @@ class LoginView(View):
                 sysrolemenu__role_id__in=role_ids
             ).distinct()  
             
-            print(f"Raw menus: {menus}")  
 
             sorted_menus = sorted(menus, key=lambda x: x.id) 
             menu_tree = self.buildTreeMenu(sorted_menus)  
             
-            print(f"Menu tree: {menu_tree}")  
 
             serialized_menus = [
                 SysMenuSerializer(menu).data for menu in menu_tree
@@ -112,13 +110,10 @@ class CaptchaView(View):
     def get(self, request):
         characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
         data = ''.join(random.sample(characters, 4))
-        print("data", data)
         captcha = ImageCaptcha()
         imageData: BytesIO = captcha.generate(data)
         base64_str = base64.b64encode(imageData.getvalue()).decode()
-        print(type(base64_str), base64_str)
         random_uuid = uuid.uuid4()  # 生成一个随机数
-        print(random_uuid)
         cache.set(random_uuid, data, timeout=300)  # 存到redis缓存中 有效期5分钟
         return JsonResponse({'code': 200, 'base64str': 'data:image/png;base64,' + base64_str, 'uuid': random_uuid})
     

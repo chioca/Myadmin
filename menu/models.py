@@ -34,7 +34,6 @@ class SysMenuSerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
 
     def get_children(self, obj):
-        print("111")
         if hasattr(obj, "children"):
             serializerMenuList: list[SysMenuSerializer2] = list()
             for sysMenu in obj.children:
