@@ -1,4 +1,5 @@
 import base64
+import datetime
 from io import BytesIO
 import json
 import random
@@ -71,6 +72,17 @@ class LoginView(View):
         except Exception as e:
             raise Exception(str(e))  # 异常由装饰器统一处理
 
+class SaveView(View):
+    @standard_api_response
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        if data['id'] == -1:
+            pass
+        else:
+            obj_sysuser = SysUser(id=data['id'], username=data['username'], password=data['password'], avatar=data['avatar'], email=data['email'], phonenumber=data['phonenumber'], login_data=data['login_data'], status=data['status'], create_time=data['create_time'], update_time=data['update_time'], remark=data['remark'])
+            obj_sysuser.update_time = datetime.now().date()
+            obj_sysuser.save()
+        return JsonResponse({'code':200, 'message':'Success'})
 # class TestView(View):
 #     def get(self, request):
 #         token = request.META.get('HTTP_AUTHORIZATION')
