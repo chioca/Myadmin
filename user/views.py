@@ -1,11 +1,18 @@
+import base64
+from io import BytesIO
 import json
+import random
+import uuid
 from django.http import JsonResponse
 from django.views import View
+from django.core.cache import cache
 from user.models import SysUser, SysUserSerializer, SysUserMapper
 from rest_framework_jwt.settings import api_settings
 from user.decorators import standard_api_response
 from menu.models import SysMenu, SysMenuSerializer
 from role.models import SysRole
+from captcha.image import ImageCaptcha
+from base64 import *
 # Create your views here.
 
 
@@ -66,36 +73,52 @@ class LoginView(View):
         except Exception as e:
             raise Exception(str(e))  # 异常由装饰器统一处理
 
-class TestView(View):
+# class TestView(View):
+#     def get(self, request):
+#         token = request.META.get('HTTP_AUTHORIZATION')
+#         if not token:  # 更简洁的判断
+#             return JsonResponse({
+#                 'code': 401,
+#                 'msg': '没有访问权限',
+#                 'data': None
+#             }, status=401)  
+
+#         try:
+#             query_set = SysUser.objects.all()
+#             users = [SysUserMapper(user).as_dict() for user in query_set]  # 列表推导简化
+#             return JsonResponse({
+#                 'code': 200,
+#                 'msg': '成功',
+#                 'data': users  # 实际数据放在 data 字段
+#             })
+#         except Exception as e:
+#             return JsonResponse({
+#                 'code': 500,
+#                 'msg': f'服务器错误: {str(e)}',
+#                 'data': None
+#             }, status=500)
+
+# class JwtTestView(View):
+#     def get(self,request):
+#         user = SysUser.objects.get(username='marry',password=123456)
+#         jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+#         jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+#         payload = jwt_payload_handler(user)
+#         token = jwt_encode_handler(payload)
+#         return JsonResponse({'code':200,'token':token})
+    
+class CaptchaView(View):
+
     def get(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION')
-        if not token:  # 更简洁的判断
-            return JsonResponse({
-                'code': 401,
-                'msg': '没有访问权限',
-                'data': None
-            }, status=401)  
-
-        try:
-            query_set = SysUser.objects.all()
-            users = [SysUserMapper(user).as_dict() for user in query_set]  # 列表推导简化
-            return JsonResponse({
-                'code': 200,
-                'msg': '成功',
-                'data': users  # 实际数据放在 data 字段
-            })
-        except Exception as e:
-            return JsonResponse({
-                'code': 500,
-                'msg': f'服务器错误: {str(e)}',
-                'data': None
-            }, status=500)
-
-class JwtTestView(View):
-    def get(self,request):
-        user = SysUser.objects.get(username='marry',password=123456)
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
-        return JsonResponse({'code':200,'token':token})
+        characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        data = ''.join(random.sample(characters, 4))
+        print("data", data)
+        captcha = ImageCaptcha()
+        imageData: BytesIO = captcha.generate(data)
+        base64_str = base64.b64encode(imageData.getvalue()).decode()
+        print(type(base64_str), base64_str)
+        random_uuid = uuid.uuid4()  # 生成一个随机数
+        print(random_uuid)
+        cache.set(random_uuid, data, timeout=300)  # 存到redis缓存中 有效期5分钟
+        return JsonResponse({'code': 200, 'base64str': 'data:image/png;base64,' + base64_str, 'uuid': random_uuid})
+    
